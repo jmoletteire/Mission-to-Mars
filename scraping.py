@@ -19,6 +19,7 @@ def scrape_all():
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
+        "hemispheres": hemisphere_images(browser),
         "last_modified": dt.datetime.now()
     }
 
@@ -94,6 +95,43 @@ def mars_facts():
     df.set_index('description', inplace=True)
 
     return df.to_html()
+
+
+# Hemisphere Images
+def hemisphere_images(browser):
+    # 1. Use browser to visit the URL
+    url = 'https://marshemispheres.com/'
+    browser.visit(url)
+
+    # 2. Create a list to hold the images and titles.
+    hemisphere_image_urls = []
+
+    # 3. Retrieve the image urls and titles for each hemisphere.
+    html = browser.html
+    img_soup = soup(html, 'html.parser')
+
+    titles = [title.get_text() for title in img_soup.find_all('h3')]
+    titles.remove(titles[-1])
+
+    for i in range(len(titles)):
+        # Find and click image link
+        browser.links.find_by_partial_text(titles[i]).click()
+
+        # Find link to full image
+        html = browser.html
+        img_soup = soup(html, 'html.parser')
+        full_image_link = img_soup.find('a', text='Sample').get('href')
+
+        # Add image link to dictionary
+        hemisphere_image_urls.append({
+            'img_url': url + full_image_link,
+            'title': titles[i]
+        })
+        # Return to previous page
+        browser.back()
+
+    # 4. Return the list that holds the dictionary of each image url and title.
+    return hemisphere_image_urls
 
 
 if __name__ == "__main__":
